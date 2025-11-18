@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arrange the Paragraph</title>
+  <style>
+    :root {
+      --primary: #2a9d8f;
+      --secondary: #0077b6;
+      --bg: #fefae0;
+      --card: #d4f1f4;
+      --radius: 12px;
+      --shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      --transition: all 0.3s ease-in-out;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #intro, #game {
+      text-align: center;
+      padding: 30px;
+      max-width: 700px;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1, h2 { color: var(--secondary); }
+
+    p { color: #444; font-size: 1.1rem; }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 28px;
+      font-size: 18px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    button:hover {
+      background: #21867a;
+      transform: scale(1.05);
+    }
+
+    #sentence-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 600px;
+    }
+
+    .sentence {
+      padding: 12px 15px;
+      background: var(--card);
+      border: 2px solid var(--secondary);
+      border-radius: var(--radius);
+      cursor: grab;
+      width: 100%;
+      text-align: left;
+      transition: var(--transition);
+    }
+
+    .sentence:active {
+      background: #bde0fe;
+      transform: scale(1.02);
+    }
+
+    #result {
+      font-weight: bold;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    #result.correct { color: #2a9d8f; }
+    #result.wrong { color: #d62828; }
+
+    #musicToggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #0077b6;
+      color: white;
+      font-size: 16px;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    #musicToggle:hover { background: #023e8a; }
+  </style>
+</head>
+<body>
+
+  <!-- Music Toggle -->
+  <button id="musicToggle">🔊 Music On</button>
+
+  <!-- Intro Section -->
+  <div id="intro">
+    <h1>🧩 Arrange the Paragraph</h1>
+    <p>
+      Welcome! In this game, you’ll see several sentences that are jumbled.  
+      Your task is to <b>drag and arrange them</b> in the correct order to form a paragraph.
+    </p>
+    <ul style="text-align:left; margin:20px auto; max-width:500px;">
+      <li>🎯 Read carefully to understand the story flow.</li>
+      <li>🖱️ Drag sentences up or down to reorder them.</li>
+      <li>✅ Click <b>Check Answer</b> to see if your order is correct.</li>
+      <li>🏆 Complete all 10 paragraphs to win!</li>
+    </ul>
+    <button id="startBtn">Start Game ▶</button>
+  </div>
+
+  <!-- Game Section -->
+  <div id="game" style="display:none;">
+    <h2>Arrange the Sentences to Form a Paragraph</h2>
+    <p>Drag the sentences into the correct order:</p>
+    <div id="sentence-container"></div>
+    <button id="checkBtn">Check Answer</button>
+    <p id="result"></p>
+  </div>
+
+  <!-- Background Music -->
+  <audio id="bgMusic" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/09/audio_8e7249b52c.mp3?filename=fun-happy-kids-116199.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Sound Effects -->
+  <audio id="correctSound" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8dc6bead86.mp3?filename=success-1-6297.mp3"></audio>
+  <audio id="wrongSound" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ee86d9b93e.mp3?filename=cancel-1-80206.mp3"></audio>
+
+  <script>
+    const paragraphs = [
+      ["Ana wakes up early.","She washes her face.","She eats her breakfast.","Then she goes to school."],
+      ["The dog is playing.","It runs around the yard.","It chases a small ball.","The dog is very happy."],
+      ["We went to the park.","We sat on the grass.","We ate our snacks.","We had fun together."],
+      ["The sky is clear.","The sun is bright.","Birds are flying.","The day is beautiful."],
+      ["Tim likes to draw.","He uses crayons.","He colors animals and shapes.","His drawings look nice."],
+      ["The library is a quiet place.","Students go there to read and study.","Many books are arranged on shelves.","The library helps students learn new ideas."],
+      ["A volcano forms over many years.","Heat and pressure build up inside it.","Too much rain can cause floods.","Volcanoes can change the land around them."],
+      ["Carla practices singing every afternoon.","She follows her teacher’s instructions carefully.","She improves her voice little by little.","Carla dreams of joining a big competition."],
+      ["The river flows from the mountains.","It brings fresh water to many places.","Animals drink from it to survive.","The river is important to the environment."],
+      ["A computer has many parts.","The monitor shows what you do.","The keyboard helps you type words and commands.","All the parts work together to finish tasks."]
+    ];
+
+    const startBtn = document.getElementById("startBtn");
+    const intro = document.getElementById("intro");
+    const game = document.getElementById("game");
+    const container = document.getElementById("sentence-container");
+    const result = document.getElementById("result");
+    const checkBtn = document.getElementById("checkBtn");
+    const musicToggle = document.getElementById("musicToggle");
+
+    const bgMusic = document.getElementById("bgMusic");
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+
+    let currentIndex = 0;
+    let dragging = null;
+    let musicPlaying = false;
+
+    // Start game
+    startBtn.addEventListener("click", async () => {
+      intro.style.display = "none";
+      game.style.display = "block";
+      musicToggle.style.display = "block";
+
+      try {
+        bgMusic.volume = 0.4;
+        await bgMusic.play(); // guaranteed inside user interaction
+        musicPlaying = true;
+        musicToggle.textContent = "🔊 Music On";
+      } catch (e) {
+        console.warn("Browser blocked audio, waiting for user input", e);
+        alert("Click anywhere or press the Music button to enable sound 🎵");
+      }
+
+      loadParagraph();
+    });
+
+    // Music toggle
+    musicToggle.addEventListener("click", async () => {
+      if (musicPlaying) {
+        bgMusic.pause();
+        musicToggle.textContent = "🔇 Music Off";
+      } else {
+        try {
+          await bgMusic.play();
+          musicToggle.textContent = "🔊 Music On";
+        } catch (e) {
+          alert("Click again to allow music playback 🎵");
+        }
+      }
+      musicPlaying = !musicPlaying;
+    });
+
+    function loadParagraph() {
+      container.innerHTML = "";
+      result.textContent = "";
+
+      const shuffled = shuffle([...paragraphs[currentIndex]]);
+      shuffled.forEach(text => {
+        const div = document.createElement("div");
+        div.className = "sentence";
+        div.textContent = text;
+        div.draggable = true;
+
+        div.addEventListener("dragstart", () => dragging = div);
+        div.addEventListener("dragover", e => e.preventDefault());
+        div.addEventListener("drop", e => {
+          e.preventDefault();
+          if (dragging && dragging !== div) {
+            const temp = dragging.textContent;
+            dragging.textContent = div.textContent;
+            div.textContent = temp;
+          }
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    checkBtn.addEventListener("click", checkOrder);
+
+    function checkOrder() {
+      const userSentences = Array.from(document.querySelectorAll(".sentence")).map(el => el.textContent);
+      const correct = paragraphs[currentIndex];
+      const isCorrect = userSentences.every((t, i) => t === correct[i]);
+
+      if (isCorrect) {
+        result.textContent = "✅ Correct! Well done!";
+        result.className = "correct";
+        correctSound.play();
+        setTimeout(() => {
+          currentIndex++;
+          if (currentIndex < paragraphs.length) {
+            loadParagraph();
+          } else {
+            document.body.innerHTML = "<h1>🎉 Congratulations!</h1><p>You completed all 10 paragraphs!</p>";
+            bgMusic.pause();
+          }
+        }, 1500);
+      } else {
+        result.textContent = "❌ Try again!";
+        result.className = "wrong";
+        wrongSound.play();
+      }
+    }
+  </script>
+</body>
+</html>

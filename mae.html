@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Learning Menu</title>
+  <style>
+    :root {
+      --text-main: #333;
+      --text-dark: #111;
+      --bg-gradient: linear-gradient(135deg, #a8edea, #fed6e3);
+      --radius: 14px;
+      --shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+      --transition: all 0.3s ease-in-out;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    /* ===== INTRO SCREEN ===== */
+    .intro-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+      padding: 30px;
+      animation: fadeIn 1s ease;
+    }
+
+    .intro-screen h1 {
+      font-size: 3rem;
+      color: #2e3a59;
+      margin-bottom: 0.5em;
+      letter-spacing: 2px;
+    }
+
+    .intro-text {
+      max-width: 650px;
+      font-size: 1.2rem;
+      color: #444;
+      line-height: 1.6;
+      min-height: 120px;
+      margin-bottom: 1.5em;
+      white-space: pre-line;
+      animation: fadeIn 1s ease;
+    }
+
+    .directions {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius);
+      padding: 20px 25px;
+      max-width: 600px;
+      text-align: left;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5em;
+    }
+
+    .directions h2 {
+      color: #2e3a59;
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+
+    .directions ul {
+      list-style-type: "👉 ";
+      padding-left: 20px;
+      line-height: 1.6;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    .start-btn {
+      padding: 16px 36px;
+      font-size: 1.3rem;
+      border: none;
+      border-radius: var(--radius);
+      background: linear-gradient(90deg, #43a047, #66bb6a);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    .start-btn:hover {
+      transform: scale(1.07);
+      background: linear-gradient(90deg, #388e3c, #81c784);
+    }
+
+    /* ===== MAIN MENU ===== */
+    .container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 90%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      animation: fadeIn 1s ease;
+    }
+
+    h1 {
+      color: var(--text-dark);
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      color: #333;
+      font-size: 1.6rem;
+      margin: 25px 0 10px;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      max-width: 500px;
+      height: 15px;
+      background: #ddd;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #43a047, #66bb6a);
+      transition: width 0.4s ease;
+    }
+
+    /* Buttons */
+    .menu-button {
+      display: block;
+      width: 100%;
+      max-width: 500px;
+      margin: 12px auto;
+      padding: 20px;
+      font-size: 20px;
+      font-weight: 600;
+      border-radius: var(--radius);
+      color: #fff;
+      text-decoration: none;
+      border: none;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      background-size: 200% auto;
+    }
+
+    .menu-button:hover:not(.locked) {
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
+
+    .locked {
+      pointer-events: none;
+      background-color: #bbb !important;
+      color: #666 !important;
+      opacity: 0.6;
+    }
+
+    /* Gradient colors for buttons */
+    .red { background-image: linear-gradient(90deg, #e53935, #ff7043); }
+    .green { background-image: linear-gradient(90deg, #43a047, #66bb6a); }
+    .orange { background-image: linear-gradient(90deg, #fb8c00, #fbc02d); }
+    .yellow { background-image: linear-gradient(90deg, #fdd835, #ffee58); color: #000; }
+    .skyblue { background-image: linear-gradient(90deg, #29b6f6, #4fc3f7); }
+    .violet { background-image: linear-gradient(90deg, #8e24aa, #ba68c8); }
+    .pink { background-image: linear-gradient(90deg, #f06292, #ec407a); }
+    .yellowgreen { background-image: linear-gradient(90deg, #9ccc65, #aed581); color: #000; }
+
+    /* Reset Button */
+    .reset-btn {
+      margin-top: 30px;
+      padding: 14px 32px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(90deg, #d32f2f, #ef5350);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    .reset-btn:hover {
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
+
+    /* Confetti */
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      .menu-button { font-size: 18px; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+
+  <!-- INTRO SCREEN -->
+  <div class="intro-screen" id="intro">
+    <h1>Welcome to Gravome-Sepa!</h1>
+    <div class="intro-text" id="introText"></div>
+
+    <div class="directions">
+      <h2>🎯 Game Directions</h2>
+      <ul>
+        <li>Click a lesson to start — only unlocked levels can be played.</li>
+        <li>Each time you finish a lesson, the next one will unlock.</li>
+        <li>Watch your progress grow on the bar above the menu.</li>
+        <li>Complete all lessons to celebrate with confetti!</li>
+        <li>Click <b>🔄 Reset Progress</b> anytime to restart from Level 1.</li>
+      </ul>
+    </div>
+
+    <button class="start-btn" id="startGame">Start Game ▶</button>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container" id="mainMenu" role="main">
+    <h1>Choose Your Lesson</h1>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <h2>Level 1</h2>
+    <a href="Synonyms word Groups.html" class="menu-button red" data-index="0">Synonyms Word Groups</a>
+    <a href="Antonyms word Groups.html" class="menu-button green locked" data-index="1">Antonyms Word Groups</a>
+    <a href="Antonyms.html" class="menu-button pink locked" data-index="2">Antonyms</a>
+    <a href="Synonyms.html" class="menu-button violet locked" data-index="3">Synonyms</a>
+
+    <h2>Level 2</h2>
+    <a href="Capitalization.html" class="menu-button orange locked" data-index="4">Capitalization</a>
+    <a href="Punctuation.html" class="menu-button yellow locked" data-index="5">Punctuation</a>
+    <a href="Spelling.html" class="menu-button pink locked" data-index="6">Spelling</a>
+
+    <h2>Level 3</h2>
+    <a href="Grammar.html" class="menu-button yellowgreen locked" data-index="7">Grammar</a>
+
+    <h2>Level 4</h2>
+    <a href="Sentence.html" class="menu-button violet locked" data-index="8">Sentence</a>
+    <a href="Paragraph.html" class="menu-button skyblue locked" data-index="9">Paragraph</a>
+
+    <button class="reset-btn" id="resetProgress">🔄 Reset Progress</button>
+  </div>
+
+  <script>
+    const intro = document.getElementById("intro");
+    const introText = document.getElementById("introText");
+    const mainMenu = document.getElementById("mainMenu");
+    const startBtn = document.getElementById("startGame");
+    const progressBar = document.getElementById("progressBar");
+    const resetBtn = document.getElementById("resetProgress");
+    const confettiCanvas = document.getElementById("confetti");
+    const ctx = confettiCanvas.getContext("2d");
+    const buttons = document.querySelectorAll(".menu-button");
+
+    let progress = parseInt(localStorage.getItem("progress")) || 0;
+
+    // ===== MUSIC =====
+    const music = new Audio("https://cdn.pixabay.com/download/audio/2021/09/27/audio_3b7c6c9c15.mp3?filename=relaxing-ambient-110997.mp3");
+    music.loop = true;
+    music.volume = 0.3;
+
+    const sounds = {
+      click: new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_f6577d47d8.mp3?filename=click-124467.mp3"),
+      success: new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_8dc6bead86.mp3?filename=success-1-6297.mp3"),
+      reset: new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_ee86d9b93e.mp3?filename=cancel-1-80206.mp3")
+    };
+
+    function playSound(name) {
+      const s = sounds[name];
+      s.currentTime = 0;
+      s.play().catch(()=>{});
+    }
+
+    // ===== TYPEWRITER INTRO TEXT =====
+    const introLines = [
+      "✨ Get ready for a fun journey through words!",
+      "Learn Synonyms, Antonyms, Grammar, and more.",
+      "Complete levels and unlock new challenges!"
+    ];
+
+    let lineIndex = 0;
+    let charIndex = 0;
+    function typeWriter() {
+      if (lineIndex < introLines.length) {
+        if (charIndex < introLines[lineIndex].length) {
+          introText.textContent += introLines[lineIndex].charAt(charIndex);
+          charIndex++;
+          setTimeout(typeWriter, 40);
+        } else {
+          introText.textContent += "\n";
+          charIndex = 0;
+          lineIndex++;
+          setTimeout(typeWriter, 600);
+        }
+      }
+    }
+    window.onload = typeWriter;
+
+    // ===== START GAME =====
+    startBtn.addEventListener("click", () => {
+      intro.style.display = "none";
+      mainMenu.style.display = "flex";
+      music.play().catch(()=>{});
+    });
+
+    // ===== CONFETTI =====
+    function startConfetti() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+      const colors = ["#e53935", "#43a047", "#fb8c00", "#29b6f6", "#ab47bc", "#fdd835"];
+      const confetti = Array.from({ length: 120 }, () => ({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * -confettiCanvas.height,
+        r: Math.random() * 6 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: Math.random() * 3 + 2
+      }));
+      const end = Date.now() + 4000;
+      function frame() {
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confetti.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          p.y += p.speed;
+          if (p.y > confettiCanvas.height) p.y = -10;
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
+    // ===== UNLOCK LOGIC =====
+    function unlockLessons() {
+      buttons.forEach((btn, i) => {
+        btn.classList.toggle("locked", i > progress);
+      });
+      const percent = ((progress + 1) / buttons.length) * 100;
+      progressBar.style.width = `${Math.min(percent, 100)}%`;
+    }
+
+    buttons.forEach((btn, i) => {
+      btn.addEventListener("click", () => {
+        playSound("click");
+        if (!btn.classList.contains("locked")) {
+          if (i >= progress && i < buttons.length - 1) {
+            progress = i + 1;
+            localStorage.setItem("progress", progress);
+            unlockLessons();
+            playSound("success");
+            if (progress >= buttons.length - 1) startConfetti();
+          }
+        }
+      });
+    });
+
+    // ===== RESET =====
+    resetBtn.addEventListener("click", () => {
+      if (confirm("Reset your progress?")) {
+        playSound("reset");
+        progress = 0;
+        localStorage.setItem("progress", progress);
+        unlockLessons();
+      }
+    });
+
+    unlockLessons();
+  </script>
+</body>
+</html>
+

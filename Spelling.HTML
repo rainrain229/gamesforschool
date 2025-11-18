@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🎶 Grammar Jumble Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary:#6a5acd;
+    --secondary:#b19cd9;
+    --bg1:#a1c4fd;
+    --bg2:#c2e9fb;
+  }
+
+  body {
+    font-family:'Poppins',sans-serif;
+    text-align:center;
+    padding:0;
+    margin:0;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    color:#333;
+    overflow-x:hidden;
+  }
+
+  h1 {
+    font-size:48px;
+    color:#fff;
+    text-shadow:2px 2px 5px rgba(0,0,0,0.3);
+    margin-top:30px;
+  }
+
+  #introScreen {
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:linear-gradient(135deg,#7b68ee,#9370db);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    z-index:5;
+    transition:opacity 1s ease;
+  }
+
+  #introScreen.fade-out { opacity:0; pointer-events:none; }
+
+  #introScreen p {
+    font-size:18px;
+    line-height:1.8;
+    width:80%;
+    max-width:600px;
+    margin-bottom:30px;
+  }
+
+  #startGameBtn {
+    background:#fff;
+    color:#6a5acd;
+    border:none;
+    padding:14px 36px;
+    font-size:20px;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+    transition:0.3s;
+  }
+  #startGameBtn:hover { transform:scale(1.05); background:#f0eaff; }
+
+  #gameContainer {
+    display:none;
+    padding:40px 20px;
+  }
+
+  #scoreBoard, #percentageBoard {
+    color:#fff;
+    margin-bottom:10px;
+    font-size:22px;
+    text-shadow:1px 1px 2px rgba(0,0,0,0.3);
+  }
+
+  #clue {
+    font-size:22px;
+    margin:20px auto;
+    color:#fff;
+    font-style:italic;
+  }
+
+  #jumbledWord {
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-bottom:10px;
+  }
+
+  .letter-circle {
+    background:#fff;
+    color:#6a5acd;
+    font-size:34px;
+    font-weight:bold;
+    border-radius:50%;
+    width:65px;
+    height:65px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.2);
+    cursor:pointer;
+    transition:0.2s;
+  }
+  .letter-circle:hover { background:#f0eaff; transform:scale(1.1); }
+  .letter-circle.used { opacity:0.4; pointer-events:none; }
+
+  input {
+    padding:12px;
+    font-size:22px;
+    width:280px;
+    border-radius:10px;
+    border:2px solid #fff;
+    outline:none;
+    margin:10px auto;
+    box-shadow:0 3px 8px rgba(0,0,0,0.1);
+  }
+
+  button {
+    padding:12px 22px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    margin:8px;
+    cursor:pointer;
+    transition:0.3s;
+    box-shadow:0 3px 8px rgba(0,0,0,0.2);
+  }
+  button:hover:not(:disabled) { transform:scale(1.05); }
+  button:disabled { opacity:0.6; cursor:not-allowed; }
+
+  #nextBtn { background:#baffc9; }
+  #clearBtn { background:#ffd6ff; }
+  #jumbleBtn { background:#ffdfba; }
+  #muteBtn { background:#ffeb3b; }
+  #result { font-size:28px; font-weight:bold; margin-top:20px; }
+</style>
+</head>
+<body>
+
+<!-- INTRO / DIRECTIONS -->
+<div id="introScreen">
+  <h1>🎯 Welcome to the Grammar Jumble Challenge!</h1>
+  <p>
+    📘 <strong>How to Play:</strong><br>
+    ➤ Click <b>Start Game</b> to begin (music plays 🎵).<br>
+    ➤ Look at the <b>jumbled letters</b> and read the clue below.<br>
+    ➤ Tap letters in order to form the correct grammar word.<br>
+    ➤ Use 🔀 <b>Jumble</b> to reshuffle letters (3x limit).<br>
+    ➤ Use 🧹 <b>Clear</b> to restart your guess.<br>
+    ➤ Click 🔄 <b>Next</b> for the next challenge!<br><br>
+    🏆 Try to get 100% accuracy!
+  </p>
+  <button id="startGameBtn" onclick="startIntro()">▶️ Start Game</button>
+</div>
+
+<!-- MAIN GAME -->
+<div id="gameContainer">
+  <h1>🎶 Grammar Jumble Challenge</h1>
+
+  <div id="scoreBoard">🏆 Score: <span id="score">0</span> / <span id="attempts">0</span></div>
+  <div id="percentageBoard">Percentage: <span id="percentage">0</span>%</div>
+
+  <div id="clue"></div>
+  <div id="jumbledWord">Press Start</div>
+  <input type="text" id="userInput" placeholder="Click the letters!" readonly><br>
+
+  <button id="nextBtn" onclick="newWord()" disabled>🔄 Next</button>
+  <button id="clearBtn" onclick="clearInput()">🧹 Clear</button>
+  <button id="jumbleBtn" onclick="reshuffleWord()" disabled>🔀 Jumble (3)</button>
+  <button id="muteBtn" onclick="toggleMute()">🔇 Mute</button>
+
+  <div id="result"></div>
+</div>
+
+<!-- AUDIO -->
+<audio id="bgMusic" loop>
+  <source src="https://cdn.pixabay.com/audio/2023/03/07/audio_c6c3bafcb2.mp3" type="audio/mpeg">
+</audio>
+<audio id="correctSound">
+  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_7e9e65f82f.mp3" type="audio/mpeg">
+</audio>
+<audio id="wrongSound">
+  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_58c1e5b4e7.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const words = [
+  {word:'noun', clue:'A word representing a person, place, thing, or idea.'},
+  {word:'verb', clue:'A word showing action or state.'},
+  {word:'sentence', clue:'A set of words forming a complete thought.'},
+  {word:'plural', clue:"Refers to more than one item (e.g., 'cats')."},
+  {word:'singular', clue:"Refers to a single item (e.g., 'cat')."},
+  {word:'synonym', clue:'A word similar in meaning to another.'},
+  {word:'antonym', clue:'A word opposite in meaning to another.'},
+  {word:'adverb', clue:'A word that modifies a verb, adjective or other adverb.'},
+  {word:'pronoun', clue:"A word that replaces a noun (e.g., 'he')."},
+  {word:'clause', clue:'A group of words with a subject and predicate.'},
+  {word:'preposition', clue:"Shows relationship between a noun and other words (e.g., 'in')."},
+  {word:'conjunction', clue:"Connects words/phrases (e.g., 'and')."},
+  {word:'interjection', clue:"Expresses emotion (e.g., 'Wow!')."},
+  {word:'predicate', clue:"Part of a sentence telling what the subject does."},
+  {word:'antecedent', clue:"The noun a pronoun refers back to."},
+  {word:'participle', clue:"Verb form used as an adjective (e.g., 'broken')."},
+  {word:'ellipsis', clue:"Three dots (…) indicating omitted words."},
+  {word:'subordinate', clue:"Dependent clause that cannot stand alone."},
+  {word:'modal', clue:"A helping verb expressing ability or permission (e.g., 'can')."}
+];
+
+let currentWord = "", jumbled = "", score = 0, attempts = 0, reshuffles = 3, muted = false;
+const bgMusic=document.getElementById('bgMusic');
+const correctSound=document.getElementById('correctSound');
+const wrongSound=document.getElementById('wrongSound');
+
+function startIntro(){
+  const intro=document.getElementById('introScreen');
+  intro.classList.add('fade-out');
+  setTimeout(()=>{ intro.style.display='none'; document.getElementById('gameContainer').style.display='block'; startGame(); },800);
+}
+
+function startGame(){
+  bgMusic.volume=0.4;
+  bgMusic.play();
+  newWord();
+}
+
+function toggleMute(){
+  muted=!muted;
+  if(muted){bgMusic.pause();document.getElementById('muteBtn').textContent='🔊 Unmute';}
+  else {bgMusic.play();document.getElementById('muteBtn').textContent='🔇 Mute';}
+}
+
+function shuffle(w){return w.split('').sort(()=>Math.random()-0.5).join('');}
+
+function newWord(){
+  const r=Math.floor(Math.random()*words.length);
+  currentWord=words[r].word;
+  jumbled=shuffle(currentWord);
+  while(jumbled===currentWord){jumbled=shuffle(currentWord);}
+  showLetters(jumbled);
+  document.getElementById('clue').textContent="💡 Clue: "+words[r].clue;
+  document.getElementById('userInput').value='';
+  document.getElementById('result').textContent='';
+  document.getElementById('nextBtn').disabled=true;
+  reshuffles=3;
+  const jb=document.getElementById('jumbleBtn');
+  jb.disabled=false;
+  jb.textContent=`🔀 Jumble (${reshuffles})`;
+  attempts++;
+  updateScore();
+}
+
+function showLetters(word){
+  const c=document.getElementById('jumbledWord');
+  c.innerHTML='';
+  word.split('').forEach((ltr,i)=>{
+    const d=document.createElement('div');
+    d.className='letter-circle';
+    d.textContent=ltr.toUpperCase();
+    d.onclick=()=>pickLetter(i,ltr);
+    c.appendChild(d);
+  });
+}
+
+function pickLetter(i,ltr){
+  const inp=document.getElementById('userInput');
+  inp.value+=ltr;
+  document.getElementsByClassName('letter-circle')[i].classList.add('used');
+  if(inp.value.length===currentWord.length) checkAnswer();
+}
+
+function checkAnswer(){
+  const val=document.getElementById('userInput').value.toLowerCase();
+  const res=document.getElementById('result');
+  if(val===currentWord){
+    res.textContent='✅ Correct!';
+    res.style.color='lime';
+    score++;
+    document.getElementById('nextBtn').disabled=false;
+    if(!muted) correctSound.play();
+  } else {
+    res.textContent='❌ Try Again!';
+    res.style.color='red';
+    if(!muted) wrongSound.play();
+  }
+  updateScore();
+}
+
+function clearInput(){
+  document.getElementById('userInput').value='';
+  document.querySelectorAll('.letter-circle').forEach(e=>e.classList.remove('used'));
+  document.getElementById('result').textContent='';
+}
+
+function updateScore(){
+  document.getElementById('score').textContent=score;
+  document.getElementById('attempts').textContent=attempts;
+  document.getElementById('percentage').textContent=attempts>0?((score/attempts)*100).toFixed(0):0;
+}
+
+function reshuffleWord(){
+  if(reshuffles>0){
+    jumbled=shuffle(currentWord);
+    while(jumbled===currentWord){jumbled=shuffle(currentWord);}
+    showLetters(jumbled);
+    document.getElementById('userInput').value='';
+    document.getElementById('result').textContent='';
+    reshuffles--;
+    const jb=document.getElementById('jumbleBtn');
+    jb.textContent=`🔀 Jumble (${reshuffles})`;
+    if(reshuffles===0) jb.disabled=true;
+  }
+}
+</script>
+</body>
+</html>

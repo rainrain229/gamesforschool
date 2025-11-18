@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Build a Sentence Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #a8edea, #fed6e3);
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      flex-direction: column;
+      transition: opacity 0.8s ease;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .card {
+      background: #ffffffc7;
+      backdrop-filter: blur(6px);
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      padding: 40px;
+      width: 80%;
+      max-width: 700px;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+
+    p {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #357ab7;
+      transform: scale(1.05);
+    }
+
+    #sentence-label {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .jumbled-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .word-box {
+      background-color: #ffffff;
+      border: 2px solid #4a90e2;
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: 600;
+      min-width: 80px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+
+    .word-box:hover {
+      transform: scale(1.1);
+    }
+
+    input[type="text"] {
+      width: 80%;
+      padding: 12px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: 2px dashed #0077cc;
+      margin-bottom: 15px;
+      outline: none;
+    }
+
+    #result, #final-score {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    #final-score {
+      color: #004d40;
+    }
+
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Intro Screen -->
+  <div class="screen active" id="introScreen">
+    <div class="card">
+      <h1>🎯 Build a Sentence</h1>
+      <p>Welcome to the English Sentence Builder!</p>
+      <p>📝 <strong>How to Play:</strong></p>
+      <ul style="text-align:left; max-width:500px; margin: 0 auto; font-size:17px; color:#333;">
+        <li>Read the jumbled words shown on screen.</li>
+        <li>Type the correct complete sentence in the box.</li>
+        <li>Use a capital letter at the start and a period at the end.</li>
+        <li>Click <b>Check</b> to see your answer.</li>
+        <li>Click <b>Next</b> to continue to the next sentence.</li>
+      </ul>
+      <br>
+      <button onclick="startGame()">🎮 Start Game</button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div class="screen" id="gameScreen">
+    <div class="card">
+      <h1>Build a Sentence</h1>
+      <div id="sentence-label">Sentence 1</div>
+
+      <div class="jumbled-container" id="wordBoxContainer"></div>
+
+      <input type="text" id="userSentence" placeholder="Type the complete sentence here..." />
+      <br>
+      <button onclick="checkSentence()">Check</button>
+      <button id="nextBtn" onclick="loadNextSentence()" style="display:none;">Next</button>
+
+      <div id="result"></div>
+      <div id="final-score"></div>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_9d1acbfa6e.mp3?filename=calm-background-ambient-110661.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f8b1f3218a.mp3?filename=correct-2-46134.mp3"></audio>
+  <audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3e4c5a4f44.mp3?filename=error-126627.mp3"></audio>
+  <audio id="clickSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_9a80e0ad2e.mp3?filename=click-21156.mp3"></audio>
+
+  <script>
+    const sentences = [
+      { words: ["I", "eat", "rice", "every", "day"], correct: "I eat rice every day." },
+      { words: ["The", "dog", "runs", "fast"], correct: "The dog runs fast." },
+      { words: ["She", "reads", "books", "at", "home"], correct: "She reads books at home." },
+      { words: ["We", "play", "basketball", "after", "school"], correct: "We play basketball after school." },
+      { words: ["My", "father", "drives", "to", "work"], correct: "My father drives to work." },
+      { words: ["Although", "he", "was", "tired", "he", "finished", "his", "homework", "on", "time"], correct: "Although he was tired, he finished his homework on time." },
+      { words: ["If", "students", "practice", "reading", "daily", "their", "vocabulary", "will", "improve"], correct: "If students practice reading daily, their vocabulary will improve." },
+      { words: ["Before", "going", "to", "bed", "she", "always", "brushes", "and", "flosses", "her", "teeth"], correct: "Before going to bed, she always brushes and flosses her teeth." },
+      { words: ["Technology", "advances", "quickly", "so", "students", "must", "keep", "up", "with", "new", "skills"], correct: "Technology advances quickly, so students must keep up with new skills." },
+      { words: ["Although", "she", "was", "sick", "she", "attended", "school", "because", "the", "exam", "was", "important"], correct: "Although she was sick, she attended school because the exam was important." }
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+
+    const bgMusic = document.getElementById("bgMusic");
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+    const clickSound = document.getElementById("clickSound");
+
+    function playClick() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+
+    function startGame() {
+      playClick();
+      document.getElementById("introScreen").classList.remove("active");
+      document.getElementById("gameScreen").classList.add("active");
+      bgMusic.volume = 0.4;
+      bgMusic.play();
+      loadSentence();
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function loadSentence() {
+      const wordBox = document.getElementById("wordBoxContainer");
+      const label = document.getElementById("sentence-label");
+      const input = document.getElementById("userSentence");
+      const result = document.getElementById("result");
+      const finalScore = document.getElementById("final-score");
+      const nextBtn = document.getElementById("nextBtn");
+
+      result.textContent = "";
+      input.value = "";
+      finalScore.textContent = "";
+      nextBtn.style.display = "none";
+
+      const current = sentences[currentIndex];
+      label.textContent = `Sentence ${currentIndex + 1}`;
+      wordBox.innerHTML = "";
+
+      const shuffled = shuffle([...current.words]);
+      shuffled.forEach(word => {
+        const box = document.createElement("div");
+        box.className = "word-box";
+        box.textContent = word;
+        wordBox.appendChild(box);
+      });
+    }
+
+    function checkSentence() {
+      const input = document.getElementById("userSentence").value.trim();
+      const result = document.getElementById("result");
+      const correct = sentences[currentIndex].correct;
+      const nextBtn = document.getElementById("nextBtn");
+
+      const capitalCheck = input[0] === input[0].toUpperCase();
+      const punctuationCheck = input.endsWith(".");
+
+      if (!capitalCheck || !punctuationCheck) {
+        result.textContent = "⚠️ Use a capital letter at the beginning and a period at the end.";
+        result.style.color = "#e67e00";
+        wrongSound.play();
+      } else if (input.replace(/\s+/g, " ").toLowerCase() === correct.toLowerCase()) {
+        result.textContent = "✅ Correct! Click 'Next' to continue.";
+        result.style.color = "green";
+        nextBtn.style.display = "inline-block";
+        correctCount++;
+        correctSound.play();
+      } else {
+        result.textContent = "❌ Incorrect sentence. Try again.";
+        result.style.color = "red";
+        wrongSound.play();
+      }
+    }
+
+    function loadNextSentence() {
+      playClick();
+      currentIndex++;
+      const result = document.getElementById("result");
+      const finalScore = document.getElementById("final-score");
+      const nextBtn = document.getElementById("nextBtn");
+
+      if (currentIndex < sentences.length) {
+        loadSentence();
+      } else {
+        const percentage = Math.round((correctCount / sentences.length) * 100);
+        result.textContent = "🎉 All sentences complete! Great job!";
+        finalScore.textContent = `Final Score: ${correctCount}/${sentences.length} (${percentage}%)`;
+        nextBtn.style.display = "none";
+        document.getElementById("userSentence").style.display = "none";
+        document.querySelector("button[onclick='checkSentence()']").style.display = "none";
+        document.getElementById("wordBoxContainer").innerHTML = "";
+        document.getElementById("sentence-label").textContent = "✅ Level Complete";
+      }
+    }
+  </script>
+</body>
+</html>
+

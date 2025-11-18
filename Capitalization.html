@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capitalization Game</title>
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  background: linear-gradient(135deg, #a8edea, #fed6e3);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Screens */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+}
+.screen.active { display: flex; }
+
+/* Card Design */
+.card {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(6px);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 700px;
+  width: 90%;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+.card:hover { transform: translateY(-5px); }
+
+/* Headings */
+h1 { margin-bottom: 15px; color: #333; }
+p { font-size: 16px; color: #333; }
+
+/* Highlight */
+.highlight { color: red; font-weight: bold; text-decoration: underline; }
+
+/* Input & Buttons */
+input[type="text"] {
+  width: 90%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 2px solid #0077cc;
+  margin-top: 10px;
+}
+button {
+  padding: 12px 25px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #4a90e2;
+  color: white;
+  margin: 10px;
+  transition: all 0.3s ease;
+}
+button:hover { background-color: #357ab7; transform: scale(1.05); }
+
+/* Feedback */
+#feedback { font-weight: bold; margin-top: 15px; font-size:18px; }
+#scoreDisplay { margin-top: 10px; color: #555; font-size:16px; }
+
+/* Confetti Canvas */
+#confettiCanvas {
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:9999;
+}
+</style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<!-- Intro Screen -->
+<div class="screen active" id="introScreen">
+  <div class="card">
+    <h1>🎯 Capitalization Game</h1>
+    <p>Retype sentences with proper capitalization!</p>
+    <ul style="text-align:left; margin: 0 auto; max-width: 500px;">
+      <li>Red words are clues to capitalize.</li>
+      <li>Type the sentence correctly.</li>
+      <li>Game will automatically move to the next sentence.</li>
+    </ul>
+    <button onclick="startGame()">Start Game 🎮</button>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="gameScreen">
+  <div class="card" id="gameCard">
+    <h1>Capitalize Properly</h1>
+    <p id="sentence"></p>
+    <input type="text" id="userInput" placeholder="Type the sentence here" />
+    <br>
+    <button id="submitBtn" onclick="checkAnswer()">Submit Answer</button>
+    <p id="feedback"></p>
+    <p id="scoreDisplay"></p>
+  </div>
+</div>
+
+<!-- Audio -->
+<audio id="bgMusic" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_9d1acbfa6e.mp3?filename=calm-background-ambient-110661.mp3" type="audio/mpeg">
+</audio>
+<audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f8b1f3218a.mp3?filename=correct-2-46134.mp3"></audio>
+<audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3e4c5a4f44.mp3?filename=error-126627.mp3"></audio>
+
+<script>
+// SENTENCES & CAPITALIZATION
+const sentences = [
+  "the students read the book titled harry potter in class.",
+  "mrs. reyes teaches english and filipino at our school.",
+  "we visited rizal park on independence day last june.",
+  "juan and maria attended the math workshop in quezon city.",
+  "the principal of st. thomas academy gave a welcome speech.",
+  "our class went on a field trip to the national museum.",
+  "professor cruz explained the chapter on the solar system.",
+  "the students celebrated world teachers day last october.",
+  "ana submitted her science project at mapua university.",
+  "we watched the play romeo and juliet at the city theater."
+];
+
+const capitalWords = [
+  "students", "harry", "potter", "mrs.", "reyes", "english", "filipino", "rizal", "park",
+  "independence", "day", "june", "juan", "maria", "math", "workshop", "quezon", "city",
+  "st.", "thomas", "academy", "principal", "national", "museum", "professor", "cruz",
+  "solar", "system", "world", "teachers", "ana", "science", "mapua", "university", "romeo", "juliet", "city", "theater"
+];
+
+let currentSentence = "";
+let currentIndex = 0;
+let score = 0;
+
+// AUDIO
+const bgMusic = document.getElementById("bgMusic");
+const correctSound = document.getElementById("correctSound");
+const wrongSound = document.getElementById("wrongSound");
+
+// START GAME
+function startGame(){
+  document.getElementById("introScreen").classList.remove("active");
+  document.getElementById("gameScreen").classList.add("active");
+  bgMusic.volume = 0.4;
+  bgMusic.play();
+  loadGame();
+}
+
+// HIGHLIGHT CAPITAL WORDS
+function highlightCapitalWords(sentence){
+  const words = sentence.split(/(\s+|[.,])/);
+  let result = "";
+  let isFirstWord = true;
+  for (let word of words){
+    const cleanWord = word.toLowerCase().replace(/[.,]/g,'');
+    const isCapital = capitalWords.includes(cleanWord) || (isFirstWord && /[a-zA-Z]/.test(word));
+    result += isCapital ? `<span class="highlight">${word}</span>` : word;
+    if(/\S/.test(word)) isFirstWord=false;
+  }
+  return result;
+}
+
+// GENERATE CURRENT SENTENCE
+function generateSentence(index){
+  const selected = sentences[index];
+  currentSentence = selected.split(' ').map((word,idx)=>{
+    if(idx===0 || capitalWords.includes(word.toLowerCase().replace(/[.,]/g,''))){
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+    return word;
+  }).join(' ');
+  return highlightCapitalWords(selected);
+}
+
+// LOAD SENTENCE
+function loadGame(){
+  document.getElementById("sentence").innerHTML = generateSentence(currentIndex);
+  document.getElementById("userInput").value = "";
+  document.getElementById("feedback").innerText = "";
+}
+
+// CHECK ANSWER
+function checkAnswer(){
+  const userInput = document.getElementById("userInput").value.trim();
+  const feedback = document.getElementById("feedback");
+
+  if(userInput === currentSentence){
+    feedback.innerText = "✅ Correct!";
+    feedback.style.color = "green";
+    correctSound.play();
+    score++;
+  } else {
+    feedback.innerText = `❌ Incorrect! Correct: "${currentSentence}"`;
+    feedback.style.color = "red";
+    wrongSound.play();
+  }
+
+  // Auto next sentence
+  setTimeout(() => {
+    currentIndex++;
+    if(currentIndex < sentences.length) loadGame();
+    else endGame();
+  }, 1500);
+}
+
+// END GAME
+function endGame(){
+  const card = document.getElementById("gameCard");
+  card.innerHTML = `
+    <h1>🎉 Congratulations!</h1>
+    <p>You've completed the game.</p>
+    <p style="font-size:20px; font-weight:bold;">Final Score: ${score} / ${sentences.length}</p>
+  `;
+  launchConfetti();
+}
+
+// CONFETTI EFFECT
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const confettiCount = 150;
+  const confetti = [];
+
+  for (let i=0;i<confettiCount;i++){
+    confetti.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height- canvas.height,
+      r: Math.random()*6+2,
+      d: Math.random()*confettiCount,
+      color: `hsl(${Math.random()*360},100%,50%)`,
+      tilt: Math.random()*10-10,
+      tiltAngleIncrement: Math.random()*0.07+0.05,
+      tiltAngle: 0
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confetti.forEach((c)=>{
+      ctx.beginPath();
+      ctx.lineWidth = c.r;
+      ctx.strokeStyle = c.color;
+      ctx.moveTo(c.x + c.tilt + c.r/2, c.y);
+      ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r/2);
+      ctx.stroke();
+    });
+    update();
+  }
+
+  function update(){
+    confetti.forEach((c,i)=>{
+      c.tiltAngle += c.tiltAngleIncrement;
+      c.y += (Math.cos(c.d)+3 + c.r/2)/2;
+      c.tilt = Math.sin(c.tiltAngle)*15;
+
+      if(c.y > canvas.height){
+        confetti[i] = {
+          x: Math.random()*canvas.width,
+          y: -20,
+          r: c.r,
+          d: c.d,
+          color: c.color,
+          tilt: Math.random()*10-10,
+          tiltAngleIncrement: c.tiltAngleIncrement,
+          tiltAngle: 0
+        };
+      }
+    });
+  }
+
+  setInterval(draw,20);
+}
+</script>
+</body>
+</html>

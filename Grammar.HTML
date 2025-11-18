@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is or Are Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #a8edea, #fed6e3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+.container {
+  max-width: 800px;
+  width: 100%;
+  background: #fff;
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  text-align: center;
+  position: relative;
+}
+h1 { color: #00796b; margin-bottom: 10px; }
+.instructions {
+  font-weight: 500;
+  color: #004d40;
+  background: #e0f7fa;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  text-align: left;
+  line-height: 1.7;
+}
+.btn {
+  padding: 12px 28px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin: 10px;
+  color: white;
+  transition: transform 0.2s, background 0.3s;
+}
+.btn:active { transform: scale(0.95); }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+#startBtn { background: linear-gradient(45deg,#4caf50,#43a047); }
+#continueBtn { background: linear-gradient(45deg,#008CBA,#00ACC1); }
+#isBtn { background: linear-gradient(45deg,#81ecec,#74b9ff); }
+#areBtn { background: linear-gradient(45deg,#ff8a65,#ff7043); }
+#nextBtn { background: linear-gradient(45deg,#4caf50,#43a047); display:none; margin:10px auto; }
+.question-card {
+  background: linear-gradient(180deg,#f7fffb,#eafaf5);
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+.sentence { font-size: 24px; font-weight: 600; margin-bottom: 20px; }
+.blank { border-bottom: 3px solid #00796b; padding: 2px 10px; display: inline-block; min-width: 60px; }
+.buttons { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+#feedback { font-size: 20px; font-weight: 600; min-height: 28px; margin-top: 10px; }
+.overlay {
+  position: fixed; inset: 0; display: flex; justify-content: center; align-items: center;
+  background: rgba(0,0,0,0.55); opacity: 0; transition: opacity 0.3s ease;
+  pointer-events: none; z-index: 100;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+.ghost-box { text-align: center; animation: shake 0.5s ease-in-out 0s 4; }
+@keyframes shake {
+  0%{transform:translateX(0);}
+  25%{transform:translateX(-10px);}
+  50%{transform:translateX(10px);}
+  75%{transform:translateX(-10px);}
+  100%{transform:translateX(0);}
+}
+#introPage {
+  animation: fadeIn 1s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.fade-out {
+  animation: fadeOut 1s forwards;
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateY(-40px);}
+}
+#starContainer { margin-top: 10px; min-height: 40px; }
+.star { font-size: 30px; margin: 2px; display: inline-block; transition: transform 0.3s, color 0.3s; }
+.star.bounce { animation: bounce 0.5s ease infinite alternate; }
+@keyframes bounce { 0%{transform:translateY(0);} 100%{transform:translateY(-20px);} }
+</style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+
+  <!-- Intro Page -->
+  <div id="introPage">
+    <h1>🎮 Welcome to the “Is or Are” Challenge!</h1>
+    <p style="font-size:18px; color:#555;">A fun grammar game to test your English skills.</p>
+    <button class="btn" id="continueBtn">View Directions ➡️</button>
+  </div>
+
+  <!-- Directions Page -->
+  <div id="startPage" style="display:none;">
+    <h1>📘 How to Play</h1>
+    <div class="instructions">
+      <strong>Directions:</strong><br><br>
+      🧠 <strong>1.</strong> Read each sentence carefully.<br>
+      ✏️ <strong>2.</strong> Choose <strong>"is"</strong> or <strong>"are"</strong> to fill in the blank.<br>
+      🌟 <strong>3.</strong> Correct = You earn a ⭐ star!<br>
+      👻 <strong>4.</strong> Wrong = A funny ghost appears for 2 seconds.<br>
+      ⏩ <strong>5.</strong> The next question will automatically appear.<br>
+      🏆 <strong>6.</strong> Finish all 20 questions to see your total score!
+    </div>
+    <button class="btn" id="startBtn">Start Game ▶️</button>
+  </div>
+
+  <!-- Quiz Page -->
+  <div id="quizPage" style="display:none;">
+    <div id="level">Level 1</div>
+    <div id="score">Score: 0</div>
+    <div id="starContainer"></div>
+    <div class="question-card">
+      <div class="sentence" id="sentence">There <span class="blank" id="blank">_____</span> many assignments due next week.</div>
+      <div class="buttons">
+        <button class="btn" id="isBtn">is</button>
+        <button class="btn" id="areBtn">are</button>
+      </div>
+      <div id="feedback"></div>
+      <button class="btn" id="nextBtn" onclick="nextQ()">Next Level ➡️</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ghost Overlay -->
+<div class="overlay" id="ghostOverlay">
+  <div class="ghost-box">
+    <svg viewBox="0 0 200 200">
+      <path d="M100 10c-38 0-68 30-68 68v52c0 8 8 18 14 18s10-6 18-6 8 6 18 6 10-6 18-6 8 6 18 6 10-6 18-6 14 8 14 0V78c0-38-30-68-68-68z" fill="#fff" stroke="#f0f3ff" stroke-width="2"/>
+      <circle cx="76" cy="86" r="8" fill="#222"/>
+      <circle cx="124" cy="86" r="8" fill="#222"/>
+      <path d="M78 116c4 6 20 6 24 0" stroke="#222" stroke-linecap="round" stroke-width="3"/>
+    </svg>
+    <div style="color:white; font-size:20px; font-weight:bold; margin-top:10px;">Oops! Wrong answer!</div>
+  </div>
+</div>
+
+<!-- Sounds -->
+<audio id="introMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"></audio>
+<audio id="bgMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+<audio id="clickSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+
+<script>
+let questions = [
+  { text:"There <span class='blank'>_____</span> many assignments due next week.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> a seminar on entrepreneurship tomorrow.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> several projects to complete before graduation.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> an important announcement on the bulletin board.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> students preparing for their research defense.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> a new elective offered this semester.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> plenty of scholarship opportunities available.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> a career orientation in the auditorium.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> various clubs to join after class.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> an entrance exam scheduled for new applicants.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> multiple deadlines this week.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> a guest speaker from the university.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> group activities planned for Friday.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> a tutorial posted on the e-learning platform.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> additional learning resources in the library.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> an online survey for feedback.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> senior students helping in the guidance office.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> a file you need to download.", answer:"is"},
+  { text:"There <span class='blank'>_____</span> reminders from the class adviser.", answer:"are"},
+  { text:"There <span class='blank'>_____</span> an event scheduled after the exam.", answer:"is"}
+];
+
+function shuffle(array){
+  for(let i=array.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [array[i],array[j]]=[array[j],array[i]];
+  }
+  return array;
+}
+questions = shuffle(questions);
+
+let idx=0, score=0, answered=false;
+const sentenceEl=document.getElementById('sentence');
+const blankEl=document.getElementById('blank');
+const levelEl=document.getElementById('level');
+const scoreEl=document.getElementById('score');
+const feedbackEl=document.getElementById('feedback');
+const ghostOverlay=document.getElementById('ghostOverlay');
+const starContainer=document.getElementById('starContainer');
+const introMusic=document.getElementById('introMusic');
+const bgMusic=document.getElementById('bgMusic');
+const clickSound=document.getElementById('clickSound');
+const correctSound=document.getElementById('correctSound');
+const wrongSound=document.getElementById('wrongSound');
+
+// Intro page
+window.onload = () => {
+  introMusic.volume = 0.3;
+  introMusic.play();
+};
+
+document.getElementById('continueBtn').addEventListener('click', () => {
+  clickSound.play();
+  document.getElementById('introPage').classList.add('fade-out');
+  setTimeout(()=>{
+    document.getElementById('introPage').style.display='none';
+    document.getElementById('startPage').style.display='block';
+  },800);
+});
+
+// Start game
+document.getElementById('startBtn').addEventListener('click',()=>{
+    clickSound.play();
+    introMusic.pause();
+    document.getElementById('startPage').classList.add('fade-out');
+    setTimeout(()=>{
+      document.getElementById('startPage').style.display='none';
+      document.getElementById('quizPage').style.display='block';
+      bgMusic.volume=0.2;
+      bgMusic.play();
+      render();
+    },800);
+});
+
+document.getElementById('isBtn').addEventListener('click',()=>choose('is'));
+document.getElementById('areBtn').addEventListener('click',()=>choose('are'));
+
+function render(){
+    const q=questions[idx];
+    sentenceEl.innerHTML=q.text;
+    blankEl.textContent='_____';
+    levelEl.textContent=`Level ${idx+1}`;
+    feedbackEl.textContent='';
+    answered=false;
+    enableBtns(true);
+}
+
+function enableBtns(on){
+    document.getElementById('isBtn').classList.toggle('disabled',!on);
+    document.getElementById('areBtn').classList.toggle('disabled',!on);
+}
+
+function choose(choice){
+    if(answered) return;
+    answered=true;
+    enableBtns(false);
+    blankEl.textContent=choice;
+    const q=questions[idx];
+    if(choice===q.answer) correct(); else wrong(q.answer);
+}
+
+function correct(){
+    score++; 
+    scoreEl.textContent=`Score: ${score}`;
+    feedbackEl.innerHTML='<span style="color:green">✅ Correct!</span>';
+    correctSound.play();
+    const star = document.createElement('span');
+    star.className='star';
+    star.textContent='⭐';
+    starContainer.appendChild(star);
+    setTimeout(nextQ, 1500); // Auto next
+}
+
+function wrong(correctAnswer){
+    feedbackEl.innerHTML=`<span style="color:red">❌ Wrong — correct: '${correctAnswer}'</span>`;
+    ghostOverlay.classList.add('show');
+    wrongSound.play();
+    setTimeout(()=>ghostOverlay.classList.remove('show'),1000);
+    setTimeout(nextQ, 2000); // Auto next after ghost
+}
+
+function nextQ(){
+    if(!answered) return;
+    idx++;
+    if(idx>=questions.length){
+        sentenceEl.innerHTML="<strong>🎉 Quiz Finished!</strong>";
+        feedbackEl.innerHTML=`Final Score: ${score} / ${questions.length}`;
+        bgMusic.pause(); bgMusic.currentTime=0;
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star=>star.classList.add('bounce'));
+        return;
+    }
+    render();
+}
+</script>
+</body>
+</html>

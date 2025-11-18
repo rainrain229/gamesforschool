@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antonyms Voice Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',sans-serif;
+  background:url('https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  color:#2d1758;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+}
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(6px);
+  z-index:-1;
+}
+.app{
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.12);
+  max-width:900px;
+  width:95%;
+  padding:30px;
+  animation:fadeIn 0.8s ease;
+}
+h1{text-align:center;color:#5a2ca0;margin-bottom:10px;}
+p.lead{text-align:center;color:#4a3a72;margin-bottom:18px;}
+button{
+  background:linear-gradient(90deg,#6b21a8,#9333ea);
+  border:none;border-radius:10px;
+  color:#fff;font-weight:600;padding:12px 22px;
+  cursor:pointer;font-size:16px;transition:.25s;
+}
+button:hover{background:linear-gradient(90deg,#7e22ce,#a855f7);}
+button:disabled{opacity:.6;cursor:not-allowed;}
+#introPage{text-align:center;}
+#introPage ul{text-align:left;max-width:600px;margin:20px auto;padding-left:20px;color:#4a3a72;}
+#introPage li{margin-bottom:6px;}
+#startBtn{margin-top:20px;}
+#gamePage{display:none;text-align:center;}
+.score,.progress{font-weight:700;font-size:18px;margin-bottom:10px;}
+.score{color:#fbbf24;}
+.progress{color:#6b21a8;}
+.wordContainer{display:flex;justify-content:center;gap:24px;margin:20px 0;}
+.wordBox{
+  background:#f4edff;
+  padding:18px 28px;
+  border-radius:14px;
+  font-size:28px;font-weight:700;color:#4b1e7a;
+  box-shadow:0 4px 12px rgba(107,33,148,0.1);
+  min-width:120px;text-align:center;
+}
+.controls{margin-top:12px;display:flex;justify-content:center;gap:10px;}
+.feedback{text-align:center;font-weight:700;font-size:16px;min-height:30px;margin-top:16px;}
+.feedback.ok{color:#16a34a;}
+.feedback.bad{color:#ef4444;}
+
+/* SCENE */
+.scene{
+  position:relative;
+  width:320px;height:320px;
+  margin:24px auto;
+  background:url('https://images.unsplash.com/photo-1495567720989-cebdbdd97913?auto=format&fit=crop&w=700&q=80') center/cover no-repeat;
+  border-radius:14px;
+  box-shadow:0 8px 18px rgba(99,39,146,0.05);
+  overflow:hidden;
+}
+.hook{
+  position:absolute;top:0;left:50%;
+  width:48px;height:20px;margin-left:-24px;
+  border-radius:6px;background:#a78bfa;
+  display:flex;align-items:center;justify-content:center;
+  color:white;font-weight:800;font-size:12px;
+}
+.rope{
+  position:absolute;top:20px;left:50%;
+  width:4px;height:96px;
+  background:linear-gradient(#cfc0ff,#e6dbff);
+  border-radius:2px;transform:translateX(-50%);
+}
+.ball{
+  position:absolute;width:42px;height:42px;
+  border-radius:50%;background:#f97316;
+  right:12px;top:12px;
+  display:none;z-index:10;
+}
+@keyframes flyBall{
+  0%{transform:translate(0,0);}
+  60%{transform:translate(-180px,130px);}
+  100%{transform:translate(-220px,140px);}
+}
+.ball.fly{animation:flyBall 520ms ease forwards;}
+.personWrap{
+  position:absolute;left:50%;top:120px;
+  width:160px;height:160px;transform:translateX(-50%);
+}
+@keyframes personBounce{
+  0%{transform:translateY(0);}
+  30%{transform:translateY(-12px);}
+  60%{transform:translateY(8px);}
+  100%{transform:translateY(0);}
+}
+.personHit{animation:personBounce .45s ease;}
+.end{
+  display:none;background:#faf5ff;border-radius:10px;margin-top:16px;padding:12px;
+}
+.confetti-full{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;z-index:9999;overflow:hidden;
+}
+.confetti-piece{
+  position:absolute;width:10px;height:14px;border-radius:2px;opacity:.95;
+  animation:confFall linear forwards;
+}
+@keyframes confFall{
+  0%{transform:translateY(-10vh) rotate(0deg);opacity:1;}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0;}
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+
+<!-- INTRO -->
+<div class="app" id="introPage">
+  <h1>🎓 Antonyms Voice Game</h1>
+  <p class="lead">Practice pronunciation and learn antonyms in a fun interactive way!</p>
+  <ul>
+    <li>🎧 Allow microphone access.</li>
+    <li>🎯 Two opposite words appear — pronounce one correctly.</li>
+    <li>🎙 Click <b>"Say Word"</b> to start speaking.</li>
+    <li>⭐ Earn stars for right answers!</li>
+  </ul>
+  <button id="startBtn">Start Game</button>
+</div>
+
+<!-- GAME -->
+<div class="app" id="gamePage">
+  <h1>Antonyms Practice</h1>
+  <div class="score" id="score">⭐ 0</div>
+  <div class="progress" id="progress">Press Start</div>
+
+  <div class="wordContainer">
+    <div class="wordBox" id="word1">Press</div>
+    <div class="wordBox" id="word2">Start</div>
+  </div>
+
+  <div class="controls"><button id="listenBtn" disabled>🎙 Say Word</button></div>
+  <div class="feedback" id="feedback"></div>
+
+  <div class="scene">
+    <div class="hook">HOOK</div>
+    <div class="rope"></div>
+    <div class="ball" id="ball"></div>
+    <div class="personWrap" id="personWrap">
+      <svg viewBox="0 0 160 160" id="personFace">
+        <!-- Head -->
+        <circle cx="80" cy="36" r="20" fill="#ffd6cc" stroke="#f0a78a" stroke-width="2"></circle>
+        <!-- Eyes -->
+        <circle id="eyeL" cx="73" cy="34" r="2.6" fill="#2b1b4a"></circle>
+        <circle id="eyeR" cx="87" cy="34" r="2.6" fill="#2b1b4a"></circle>
+        <!-- Smile (dynamic) -->
+        <path id="mouth" d="M70 42 q10 8 20 0" stroke="#7b3b7b" stroke-width="2" fill="none" stroke-linecap="round"></path>
+
+        <!-- Body -->
+        <rect x="56" y="56" width="48" height="58" rx="12" fill="#c7a6ff" stroke="#a27be6" stroke-width="2"></rect>
+        <!-- Arms -->
+        <rect x="36" y="64" width="20" height="12" rx="6" fill="#c7a6ff" stroke="#a27be6" stroke-width="2"></rect>
+        <rect x="104" y="64" width="20" height="12" rx="6" fill="#c7a6ff" stroke="#a27be6" stroke-width="2"></rect>
+        <!-- Hands -->
+        <circle cx="32" cy="70" r="5" fill="#ffd6cc" stroke="#f0a78a" stroke-width="1"></circle>
+        <circle cx="128" cy="70" r="5" fill="#ffd6cc" stroke="#f0a78a" stroke-width="1"></circle>
+        <!-- Legs -->
+        <rect x="64" y="112" width="12" height="28" rx="6" fill="#7b61d8"></rect>
+        <rect x="84" y="112" width="12" height="28" rx="6" fill="#7b61d8"></rect>
+      </svg>
+    </div>
+  </div>
+
+  <div class="end" id="endArea">
+    <div id="endTitle"></div>
+    <div id="endMessage"></div>
+    <button id="replayBtn">Play Again</button>
+  </div>
+</div>
+
+<div class="confetti-full" id="confettiFS"></div>
+
+<script>
+const wordPairs=[["loud","quiet"],["early","late"],["big","small"],["bright","dark"],["strong","weak"],["near","far"],["hot","cold"],["tall","short"],["easy","difficult"],["young","old"]];
+let pairIndex=0,wordIndex=0,score=0,recognition=null,accepting=false,firstTry=true;
+
+const introPage=document.getElementById('introPage');
+const gamePage=document.getElementById('gamePage');
+const scoreEl=document.getElementById('score');
+const progressEl=document.getElementById('progress');
+const word1El=document.getElementById('word1');
+const word2El=document.getElementById('word2');
+const listenBtn=document.getElementById('listenBtn');
+const feedback=document.getElementById('feedback');
+const ball=document.getElementById('ball');
+const personWrap=document.getElementById('personWrap');
+const mouth=document.getElementById('mouth');
+const confettiFS=document.getElementById('confettiFS');
+const endArea=document.getElementById('endArea');
+const endTitle=document.getElementById('endTitle');
+const endMessage=document.getElementById('endMessage');
+const replayBtn=document.getElementById('replayBtn');
+const startBtn=document.getElementById('startBtn');
+
+function setExpression(type){
+  if(type==="happy"){
+    mouth.setAttribute("d","M70 42 q10 8 20 0");
+  }else if(type==="sad"){
+    mouth.setAttribute("d","M70 48 q10 -8 20 0");
+  }else{
+    mouth.setAttribute("d","M70 42 q10 0 20 0");
+  }
+}
+
+function showPair(){
+  const pair=wordPairs[pairIndex];
+  word1El.textContent=pair[0];
+  word2El.textContent=pair[1];
+  feedback.textContent=`Say: "${pair[wordIndex]}"`;
+  progressEl.textContent=`Pair ${pairIndex+1}/${wordPairs.length} • Word ${wordIndex+1}/2`;
+  listenBtn.disabled=false;accepting=true;firstTry=true;
+  setExpression("neutral");
+}
+function updateScore(d=0){score=Math.max(0,score+d);scoreEl.textContent='⭐ '+score;}
+function animateBallHit(cb){
+  ball.style.display='block';ball.classList.remove('fly');void ball.offsetWidth;
+  ball.classList.add('fly');
+  setTimeout(()=>{
+    ball.style.display='none';personWrap.classList.add('personHit');
+    setTimeout(()=>{personWrap.classList.remove('personHit');if(cb)cb();},450);
+  },520);
+}
+function spawnConfetti(n=50){
+  confettiFS.innerHTML='';
+  const w=window.innerWidth;
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.left=Math.random()*w+'px';
+    p.style.background=['#F59E0B','#EF4444','#10B981','#60A5FA','#A78BFA'][Math.floor(Math.random()*5)];
+    p.style.animationDuration=(800+Math.random()*600)+'ms';
+    confettiFS.appendChild(p);
+    setTimeout(()=>p.remove(),2200);
+  }
+}
+function setupRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    feedback.textContent='⚠ Speech recognition not supported. Try Chrome browser.';
+    listenBtn.disabled=true;return;
+  }
+  recognition=new SR();
+  recognition.lang='en-US';
+  recognition.interimResults=false;
+  recognition.maxAlternatives=2;
+  recognition.onstart=()=>{feedback.textContent='🎧 Listening...';};
+  recognition.onresult=e=>{
+    const spoken=e.results[0][0].transcript.trim().toLowerCase();
+    processSpoken(spoken);
+  };
+  recognition.onerror=()=>feedback.textContent='⚠ Try speaking again.';
+}
+function processSpoken(spoken){
+  if(!accepting)return;accepting=false;
+  const target=wordPairs[pairIndex][wordIndex];
+  if(spoken===target){
+    feedback.textContent='✅ Correct! You said "'+spoken+'"';
+    feedback.className='feedback ok';
+    setExpression("happy");
+    if(firstTry)updateScore(1);
+    spawnConfetti(40);
+    wordIndex++;
+    setTimeout(()=>{
+      if(wordIndex>=2){pairIndex++;wordIndex=0;
+        if(pairIndex>=wordPairs.length){endGame();return;}
+      }
+      showPair();
+    },900);
+  }else{
+    feedback.textContent='❌ "'+spoken+'" is incorrect! Try again.';
+    feedback.className='feedback bad';
+    setExpression("sad");
+    firstTry=false;
+    animateBallHit(()=>{feedback.textContent='Try again: say "'+target+'"';accepting=true;});
+  }
+}
+function endGame(){
+  listenBtn.disabled=true;
+  feedback.textContent='';
+  endArea.style.display='block';
+  endTitle.textContent='🎉 Great job!';
+  endMessage.textContent='You earned '+score+' ⭐ total.';
+  setExpression("happy");
+  spawnConfetti(60);
+}
+startBtn.addEventListener('click',()=>{
+  introPage.style.display='none';
+  gamePage.style.display='block';
+  pairIndex=0;wordIndex=0;score=0;updateScore(0);
+  setupRecognition();showPair();
+});
+listenBtn.addEventListener('click',()=>recognition&&recognition.start());
+replayBtn.addEventListener('click',()=>{endArea.style.display='none';pairIndex=0;wordIndex=0;score=0;updateScore(0);showPair();});
+</script>
+</body>
+</html>

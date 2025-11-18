@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🌟 Language Skills Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root {
+  --primary:#7b3ff2;
+  --secondary:#f0e6ff;
+  --correct:#4caf50;
+  --wrong:#e63946;
+  --bg1:#f8f0ff;
+  --bg2:#e9d8fd;
+}
+
+body {
+  font-family:'Poppins', sans-serif;
+  background:linear-gradient(120deg,var(--bg1),var(--bg2));
+  margin:0;
+  padding:20px;
+  text-align:center;
+  overflow-x:hidden;
+  transition:background-color .5s ease;
+}
+
+h1 {
+  font-size:40px;
+  color:var(--primary);
+  margin-top:30px;
+  text-shadow:0 2px 5px rgba(0,0,0,0.15);
+}
+
+button {
+  font-family:'Poppins',sans-serif;
+  cursor:pointer;
+  border:none;
+  transition:0.3s;
+}
+
+.level-btn, .next-btn {
+  background:var(--primary);
+  color:white;
+  font-size:22px;
+  padding:15px 35px;
+  border-radius:30px;
+  margin:10px;
+  box-shadow:0 5px 15px rgba(123,63,242,0.3);
+}
+.level-btn:hover, .next-btn:hover { transform:scale(1.05); background:#6123d4; }
+
+#introPage, #instructions, #introSlide, #sentence, #result {
+  display:none;
+  background:white;
+  border-radius:25px;
+  padding:25px;
+  margin-top:25px;
+  box-shadow:0 6px 25px rgba(0,0,0,0.1);
+  animation:fadeIn .6s ease-in-out;
+}
+
+#introPage {
+  display:block;
+  max-width:700px;
+  margin:auto;
+}
+
+#introPage p {
+  font-size:18px;
+  margin:15px 0;
+}
+
+#sentence {
+  font-size:22px;
+  border-left:6px solid var(--primary);
+  max-width:800px;
+  margin:auto;
+  background:#f9f7ff;
+}
+
+.options {
+  display:none;
+  gap:20px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin:20px 0;
+}
+.options button {
+  font-size:26px;
+  padding:18px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  border:2px solid var(--primary);
+  background:white;
+  color:var(--primary);
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+.options button:hover { transform:scale(1.1); }
+
+#feedback { font-size:24px; font-weight:700; display:none; }
+#stars { font-size:22px; margin:10px; }
+#result { font-size:20px; max-width:700px; margin:auto; }
+ul { text-align:left; font-size:18px; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+
+#muteBtn {
+  position:fixed;
+  top:15px;
+  right:15px;
+  background:var(--primary);
+  color:white;
+  border-radius:50%;
+  width:50px;
+  height:50px;
+  font-size:22px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.2);
+  z-index:1000;
+}
+
+canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
+
+/* Floating soft background circles */
+.bg-shape {
+  position:fixed;
+  border-radius:50%;
+  opacity:0.15;
+  filter:blur(50px);
+  z-index:-1;
+  animation:float 8s infinite ease-in-out alternate;
+}
+.bg1 { background:#b388ff; width:300px; height:300px; top:10%; left:10%; }
+.bg2 { background:#ffb3e6; width:250px; height:250px; bottom:15%; right:15%; animation-delay:2s; }
+
+@keyframes float {
+  from { transform:translateY(0px); }
+  to { transform:translateY(30px); }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-shape bg1"></div>
+<div class="bg-shape bg2"></div>
+
+<button id="muteBtn" onclick="toggleMusic()">🔊</button>
+
+<h1>🌈 Language Skills Game</h1>
+
+<!-- INTRO PAGE -->
+<div id="introPage">
+  <h2>Welcome, Language Explorers!</h2>
+  <p>Sharpen your punctuation and grammar skills through this fun interactive game!  
+  You’ll go through three levels: Easy 🍑, Medium 🌸, and Hard 🔮.  
+  Earn stars for every correct answer and become a Grammar Master!</p>
+  <p><b>🎯 Goal:</b> Identify the correct punctuation mark that best fits the sentence.</p>
+  <button class="next-btn" onclick="showLevelSelect()">Start Game ▶</button>
+</div>
+
+<!-- LEVEL SELECTION -->
+<div id="levelSelect" style="display:none;">
+  <h2>Select Your Level</h2>
+  <button class="level-btn" onclick="showInstructions('easy')">🍑 Easy</button>
+  <button class="level-btn" onclick="showInstructions('medium')">🌸 Medium</button>
+  <button class="level-btn" onclick="showInstructions('hard')">🔮 Hard</button>
+</div>
+
+<div id="instructions"></div>
+<div id="introSlide"></div>
+
+<div id="sentence"></div>
+<div class="options">
+  <button onclick="submitAnswer('.')">.</button>
+  <button onclick="submitAnswer('?')">?</button>
+  <button onclick="submitAnswer('!')">!</button>
+</div>
+
+<div id="feedback"></div>
+<div id="stars"></div>
+<div id="result"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- Audio -->
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2021/09/29/audio_3b7a4eb1ff.mp3?filename=gentle-background-music-11071.mp3" loop></audio>
+<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+<audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<audio id="yeheySound" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_8d8c59dbe8.mp3?filename=yehey-voice-10300.mp3"></audio>
+<audio id="ohnoSound" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_11dbda36b4.mp3?filename=oh-no-11468.mp3"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+/* ---------- Data & Variables ---------- */
+const questions = {
+  easy: [
+    { text:"Although the instructions seemed clear, several students misused commas in their sentences", answer:"."},
+    { text:"Can the misplacement of a single punctuation mark completely change the meaning of a paragraph", answer:"?"},
+    { text:"Bravo for effectively applying parallel structures and transition words in your essay", answer:"!"},
+    { text:"Every compound and complex sentence must follow strict subject-verb agreement", answer:"."},
+    { text:"Did you notice how missing punctuation affects sentence clarity and coherence", answer:"?"},
+    { text:"All sources must be cited correctly in the bibliography", answer:"."},
+    { text:"Watch out for sentence fragments in your essay", answer:"!"},
+    { text:"Is it important to check your spelling before submission", answer:"?"},
+    { text:"Use commas to separate items in a list", answer:"."},
+    { text:"Well done on completing your first draft", answer:"!"}
+  ],
+  medium: [
+    { text:"Despite multiple revisions, the essay still contained run-on sentences and fragments", answer:"."},
+    { text:"Have you carefully distinguished between essential and nonessential clauses in your writing", answer:"?"},
+    { text:"Excellent use of semicolons and colons to separate complex ideas", answer:"!"},
+    { text:"Even though the paragraph included supporting evidence, the transitions were weak", answer:"."},
+    { text:"Could inconsistent capitalization and spelling distract the reader from the main idea", answer:"?"},
+    { text:"Avoid using double negatives in your sentences", answer:"."},
+    { text:"Make sure subject and verb agree in every clause", answer:"!"},
+    { text:"Did the conclusion summarize all key points of your essay", answer:"?"},
+    { text:"Check punctuation in direct quotations", answer:"."},
+    { text:"Well done on improving paragraph coherence", answer:"!"}
+  ],
+  hard: [
+    { text:"Because accurate punctuation is critical in academic writing, students must meticulously proofread their drafts", answer:"."},
+    { text:"Why might neglecting subject-verb agreement lead to misinterpretation in formal writing", answer:"?"},
+    { text:"What an extraordinary demonstration of cohesion, coherence, and clarity in sentence construction", answer:"!"},
+    { text:"Although the research paper was detailed, improper use of commas, semicolons, and colons reduced its readability", answer:"."},
+    { text:"Have you ensured that each paragraph contains a clear topic sentence, supporting details, and a concluding statement", answer:"?"},
+    { text:"Proper punctuation prevents ambiguity in complex sentences", answer:"."},
+    { text:"Did the use of transitions improve paragraph flow", answer:"?"},
+    { text:"Excellent job analyzing sentence structures critically", answer:"!"},
+    { text:"Avoid dangling modifiers for clarity", answer:"."},
+    { text:"Was the academic tone consistently maintained throughout the paper", answer:"?"}
+  ]
+};
+
+let currentLevel = '', levelQuestions = [], currentIndex = 0;
+let scores = { easy:0, medium:0, hard:0 };
+
+const sentenceDiv = document.getElementById("sentence");
+const optionsDiv = document.querySelector(".options");
+const feedbackDiv = document.getElementById("feedback");
+const starsDiv = document.getElementById("stars");
+const resultDiv = document.getElementById("result");
+const levelSelectDiv = document.getElementById("levelSelect");
+const clickSound = document.getElementById("clickSound");
+const correctSound = document.getElementById("correctSound");
+const wrongSound = document.getElementById("wrongSound");
+const yeheySound = document.getElementById("yeheySound");
+const ohnoSound = document.getElementById("ohnoSound");
+const bgMusic = document.getElementById("bgMusic");
+const instructionsDiv = document.getElementById("instructions");
+const introSlideDiv = document.getElementById("introSlide");
+const muteBtn = document.getElementById("muteBtn");
+
+/* ---------- Music Toggle ---------- */
+function toggleMusic(){
+  if(bgMusic.paused){
+    bgMusic.play();
+    muteBtn.textContent = "🔊";
+  } else {
+    bgMusic.pause();
+    muteBtn.textContent = "🔇";
+  }
+}
+
+/* ---------- Flow Control ---------- */
+function showLevelSelect(){
+  document.getElementById("introPage").style.display="none";
+  levelSelectDiv.style.display="block";
+  bgMusic.play();
+}
+
+const levelInstructions = {
+  easy:"🍑 <b>Easy Level:</b> Decide which punctuation mark correctly ends each sentence.",
+  medium:"🌸 <b>Medium Level:</b> The sentences get trickier—think carefully about tone and intent.",
+  hard:"🔮 <b>Hard Level:</b> Analyze structure and logic for the most accurate punctuation."
+};
+
+function showInstructions(level){
+  clickSound.play();
+  instructionsDiv.innerHTML=`
+    <h2>${level.charAt(0).toUpperCase()+level.slice(1)} Level Directions</h2>
+    <p>${levelInstructions[level]}</p>
+    <button class="next-btn" onclick="showIntro('${level}')">Next ▶</button><br><br>
+    <button class="next-btn" onclick="restartGame()">Back to Menu</button>
+  `;
+  levelSelectDiv.style.display="none";
+  instructionsDiv.style.display="block";
+}
+
+function showIntro(level){
+  clickSound.play();
+  instructionsDiv.style.display="none";
+  introSlideDiv.style.display="block";
+  introSlideDiv.innerHTML=`
+    <h2>Understanding the Choices</h2>
+    <ul>
+      <li><b>Period (.)</b> – Ends a statement or fact.</li>
+      <li><b>Question Mark (?)</b> – Used when asking a question.</li>
+      <li><b>Exclamation Point (!)</b> – Expresses strong feeling or excitement.</li>
+    </ul>
+    <button class="next-btn" onclick="startLevel('${level}')">Start Level ▶</button>
+  `;
+}
+
+/* ---------- Game Logic ---------- */
+function startLevel(level){
+  clickSound.play();
+  introSlideDiv.style.display="none";
+  currentLevel=level;
+  currentIndex=0;
+  scores[level]=0;
+  levelQuestions=[...questions[level]].sort(()=>0.5-Math.random());
+  sentenceDiv.style.display="block";
+  optionsDiv.style.display="flex";
+  feedbackDiv.style.display="none";
+  resultDiv.style.display="none";
+  updateStars();
+  loadQuestion();
+}
+
+function loadQuestion(){
+  const q=levelQuestions[currentIndex];
+  sentenceDiv.textContent=`${currentIndex+1}. ${q.text}`;
+  feedbackDiv.style.display="none";
+  document.querySelectorAll(".options button").forEach(btn=>btn.disabled=false);
+}
+
+function submitAnswer(choice){
+  const q=levelQuestions[currentIndex];
+  document.querySelectorAll(".options button").forEach(btn=>btn.disabled=true);
+  yeheySound.pause(); yeheySound.currentTime=0;
+  ohnoSound.pause(); ohnoSound.currentTime=0;
+
+  if(choice===q.answer){
+    feedbackDiv.textContent="✅ Correct!";
+    feedbackDiv.style.color="var(--correct)";
+    correctSound.play();
+    yeheySound.play();
+    scores[currentLevel]++;
+    confettiBurst();
+  } else {
+    feedbackDiv.textContent="❌ Incorrect!";
+    feedbackDiv.style.color="var(--wrong)";
+    wrongSound.play();
+    ohnoSound.play();
+    document.body.style.backgroundColor="#ffd6d6";
+    setTimeout(()=>document.body.style.backgroundColor="var(--bg1)",600);
+  }
+
+  feedbackDiv.style.display="block";
+  updateStars();
+
+  setTimeout(()=>{
+    currentIndex++;
+    if(currentIndex<levelQuestions.length) loadQuestion();
+    else showResult();
+  },2000);
+}
+
+function updateStars(){
+  starsDiv.innerHTML=`⭐ Score (${currentLevel}): ${scores[currentLevel]}/${questions[currentLevel].length}`;
+}
+
+function showResult(){
+  sentenceDiv.style.display="none";
+  optionsDiv.style.display="none";
+  const total=scores.easy+scores.medium+scores.hard;
+  let next="";
+  if(currentLevel==="easy") next='<button class="next-btn" onclick="showInstructions(\'medium\')">Next: Medium ▶</button>';
+  else if(currentLevel==="medium") next='<button class="next-btn" onclick="showInstructions(\'hard\')">Next: Hard ▶</button>';
+  else confettiBurst();
+
+  resultDiv.innerHTML=`
+    <h2>${currentLevel==="hard"?"🎉 All Levels Complete!":"Level Complete!"}</h2>
+    <p>🍑 Easy: ${scores.easy}/10<br>🌸 Medium: ${scores.medium}/10<br>🔮 Hard: ${scores.hard}/10</p>
+    <p><b>Total Stars: ${total}/30</b></p>
+    ${next}
+    <br><br><button class="next-btn" onclick="restartGame()">Restart Game</button>
+  `;
+  resultDiv.style.display="block";
+}
+
+function restartGame(){
+  clickSound.play();
+  document.getElementById("introPage").style.display="block";
+  levelSelectDiv.style.display="none";
+  instructionsDiv.style.display="none";
+  introSlideDiv.style.display="none";
+  sentenceDiv.style.display="none";
+  optionsDiv.style.display="none";
+  feedbackDiv.style.display="none";
+  resultDiv.style.display="none";
+  scores={easy:0,medium:0,hard:0};
+  updateStars();
+}
+
+/* ---------- Confetti ---------- */
+function confettiBurst(){
+  const duration=1000;
+  const end=Date.now()+duration;
+  (function frame(){
+    confetti({particleCount:5,angle:60,spread:55,origin:{x:0}});
+    confetti({particleCount:5,angle:120,spread:55,origin:{x:1}});
+    if(Date.now()<end) requestAnimationFrame(frame);
+  })();
+}
+</script>
+</body>
+</html>
